@@ -2,8 +2,10 @@
 import os
 
 import pandas as pd
+import six
 
-from stutils.sysutils import basestring
+from typing import Optional, Tuple, Union
+
 from stutils.decorators import memoize
 
 
@@ -11,34 +13,22 @@ class InvalidEmail(ValueError):
     pass
 
 
-def clean(raw_email):
+def parse(raw_email):
+    # type: (Union[str, unicode]) -> Tuple[str, str]
     """Extract email from a full address. Example:
       'John Doe <jdoe+github@foo.com>' -> jdoe@foo.com
 
-    >>> clean("me@someorg.com")
+    >>> parse("John Doe <me+github.com@someorg.com")
     'me@someorg.com'
-    >>> clean("<me@someorg.com")
-    'me@someorg.com'
-    >>> clean("me@someorg.com>")
-    'me@someorg.com'
-    >>> clean("John Doe <me@someorg.com>")
-    'me@someorg.com'
-    >>> clean("John Doe <me+github.com@someorg.com")
-    'me@someorg.com'
-    >>> clean("John Doe me@someorg.com")
-    'me@someorg.com'
-    >>> # git2svn produces addresses like this:
-    >>> clean("<me@someorg.com@ce2b1a6d-e550-0410-aec6-3dcde31c8c00>")
-    'me@someorg.com'
-    >>> clean(42)
+    >>> parse(42)
     Traceback (most recent call last):
         ...
     InvalidEmail
     """
-    if not isinstance(raw_email, basestring):
+    if not isinstance(raw_email, six.string_types):
         raise InvalidEmail
     if not raw_email or pd.isnull(raw_email):
-        return ""
+        raise InvalidEmail
     email = raw_email.split("<", 1)[-1].split(">", 1)[0]
     chunks = email.split("@", 3)
     # git-svn generates emails with several @, e.g.:
@@ -48,27 +38,37 @@ def clean(raw_email):
     uname = chunks[0].rsplit(" ", 1)[-1]
     addr_domain = chunks[1].split(" ", 1)[0]
 
-    return "%s@%s" % (uname.split("+", 1)[0], addr_domain)
+    return uname.split("+", 1)[0], addr_domain
+
+
+def clean(raw_email):
+    # type: (Union[str, unicode]) -> Optional[str]
+    """Extract email from a full address. Example:
+      'John Doe <jdoe+github@foo.com>' -> jdoe@foo.com
+
+    >>> clean(42) is None
+    True
+    >>> clean("John Doe me@someorg.com")
+    'me@someorg.com'
+    """
+    try:
+        return "%s@%s" % parse(raw_email)
+    except InvalidEmail:
+        return None
 
 
 def domain(raw_email):
-    # type: (str) -> str
-    """ Return email domain from a raw email address
+    # type: (Union[str, unicode]) -> Optional[str]
+    """ Extract email domain from a raw email address.
+    Returns None if the address is invalid
 
-    >>> domain("test@dep.uni.edu>")
+    >>> domain("John Doe <test@dep.uni.edu>")
     'dep.uni.edu'
-    >>> domain("test@dep.uni.edu@ce2b1a6d-e550-0410-aec6-3dcde31c8c00>")
+    >>> domain("Missing test@dep.uni.edu@ce2b1a6d-e550-0410-aec6-3dcde31c8c00>")
     'dep.uni.edu'
     """
-    if not raw_email or pd.isnull(raw_email):
-        return ""
-    return clean(raw_email).rsplit("@", 1)[-1]
-
-
-def _domain(raw_email):
-    """Non-throwing version of domain, suitable for .map() """
     try:
-        return domain(raw_email)
+        return parse(raw_email)[-1]
     except InvalidEmail:
         return None
 
@@ -80,8 +80,11 @@ def university_domains():
     NOTE: only 2nd level domain is returned, i.e. for aaa.bbb.uk only bbbl.uk
           will be returned. This is necessary since many universities use
           departmenntal domains, like cs.cmu.edu or andrew.cmu.edu
+    NOTE2: .edu domains are not included into this list as they're considered
+          belonging to universities by default.
 
     How to get the original CSV:
+    ```python
     x = requests.get(
          "https://raw.githubusercontent.com/Hipo/university-domains-list/"
          "master/world_universities_and_domains.json").json()
@@ -92,15 +95,7 @@ def university_domains():
     ).drop(
         ["chat.ru"]
     ).to_csv("email_university_domains.csv", index=False)
-
-    >>> isinstance(university_domains(), set)
-    True
-    >>> len(university_domains()) > 4000  # 4902 as of Jan 2018
-    True
-    >>> 'cmu.edu' in university_domains()  # .edu domains are excluded
-    False
-    >>> 'upsa.es' in university_domains()
-    True
+    ```
     """
     fh = open(
         os.path.join(os.path.dirname(__file__), "email_university_domains.csv"))
@@ -141,8 +136,6 @@ def public_domains():
     True
     >>> 'jaraco.com' in public_domains()
     False
-    >>> not public_domains().intersection(university_domains())
-    True
     """
     fh = open(
         os.path.join(os.path.dirname(__file__), "email_public_domains.csv"))
@@ -152,20 +145,7 @@ def public_domains():
 @memoize
 def domain_user_stats():
     # type: () -> pd.Series
-    """ Return statistics on
-
-    TODO: turn into a test
-    # sanity check - are non-public, non-university domains belong to companies?
-    # YES, except single user domains
-    es = pd.Series("test@" + s.index, index=s.index)
-    s[~(is_public_bulk(es) | is_university_bulk(es))].sort_values(
-        ascending=False)
-    >>> isinstance(domain_user_stats(), pd.Series)
-    True
-    >>> len(domain_user_stats()) > 100000
-    True
-    >>> (domain_user_stats() > 0).all()
-    True
+    """ Get number of distinct email addresses in observed domains
 
     TODO: get up to date with new projects layout
     How to build email_domain_users.csv:
@@ -199,7 +179,8 @@ def domain_user_stats():
     return s
     """
     fname = os.path.join(os.path.dirname(__file__), "email_domain_users.csv")
-    return pd.read_csv(fname, header=0, squeeze=True, index_col=0)
+    stats = pd.read_csv(fname, header=0, squeeze=True, index_col=0)
+    return stats[pd.notnull(stats.index)]
 
 
 @memoize
@@ -213,10 +194,6 @@ def commercial_domains():
     True
     >>> "microsoft.com" in commercial_domains()
     True
-    >>> "gmail.com" in commercial_domains()  # public
-    False
-    >>> "cmu.edu" in commercial_domains()  # university
-    False
     >>> "isri.cs.cmu.edu" in commercial_domains()  # university department
     False
     >>> "jaraco.com" in commercial_domains()  # personal
@@ -229,7 +206,7 @@ def commercial_domains():
 
 
 def is_university(addr):
-    # type: (str) -> bool
+    # type: (Union[str, unicode]) -> bool
     """ Check if provided email has a university domain
 
     - either in .edu domain
@@ -240,30 +217,14 @@ def is_university(addr):
         is matched. E.g. cs.cmu.edu will match cmu.edu
 
     :param addr: email address
-    :param domains: optional, list of university domains
     :return: bool
     >>> is_university("john@cmu.edu")
     True
-    >>> is_university("john@abc.cmu.edu")
-    True
-    >>> is_university("john@abc.edu.uk")
-    True
-    >>> is_university("john@edu.au")
-    True
-    >>> is_university("john@aedu.au")
-    False
-    >>> is_university("john@vvsu.ru")
-    True
-    >>> is_university("john@abc.vvsu.ru")
-    True
-    >>> is_university("john@england.edu")
-    False
     >>> is_university("john@gmail.com")
     False
     """
-    try:
-        addr_domain = domain(addr)
-    except InvalidEmail:
+    addr_domain = domain(addr)
+    if not addr_domain:  # invalid email
         return False
     chunks = addr_domain.split(".")
     if len(chunks) < 2:  # local or invalid address
@@ -280,36 +241,23 @@ def is_university(addr):
 
 
 def is_public(addr):
-    # type: (str) -> bool
+    # type: (Union[str, unicode]) -> bool
     """ Check if the passed email registered at a free pubic mail server
 
-    :param addr: email address
-    :param domains: optional set of public mail service domains
+    :param addr: email address to check
     :return: bool
     >>> is_public("john@cmu.edu")
     False
     >>> is_public("john@gmail.com")
     True
-    >>> is_public("john@163.com")
-    True
-    >>> is_public("john@qq.com")
-    True
-    >>> is_public("john@abc.vvsu.ru")
-    False
-    >>> is_public("john@australia.edu")
-    True
-
-    # TODO: test local addresses
     """
-    try:
-        addr_domain = domain(addr)
-    except InvalidEmail:
-        # anybody can use an invalid email
+    addr_domain = domain(addr)
+    if not addr_domain:
+        # anybody can use invalid email
         return True
     chunks = addr_domain.rsplit(".", 1)
 
-    return len(chunks[-1]) > 5 \
-        or len(chunks) < 2 \
+    return len(chunks) < 2 \
         or addr_domain.endswith("local") \
         or addr_domain in public_domains()
 
@@ -323,22 +271,17 @@ def is_commercial(addr):
     >>> is_commercial("test@jaraco.com")
     False
     """
-    try:
-        addr_domain = domain(addr)
-    except InvalidEmail:
-        return False
-    return addr_domain in commercial_domains()
+    addr_domain = domain(addr)
+    return addr_domain and addr_domain in commercial_domains()
 
 
-def bulk_check(domain_provider):
-    def wrapper(addr_series):
-        domains = domain_provider()
-        return addr_series.map(_domain).map(lambda addr: addr in domains)
-    return wrapper
+def is_commercial_bulk(addr_series):
+    domains = commercial_domains()
+    return addr_series.map(domain).map(lambda addr: addr in domains)
 
 
-is_public_bulk = bulk_check(public_domains)
-is_commercial_bulk = bulk_check(commercial_domains)
+def is_public_bulk(addr_series):
+    return addr_series.map(lambda addr: is_public(addr))
 
 
 def is_university_bulk(addr_series):

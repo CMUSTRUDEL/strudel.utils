@@ -9,28 +9,80 @@ import stutils
 from stutils.sysutils import mkdir
 
 DEFAULT_EXPIRY = stutils.get_config('ST_FS_CACHE_DURATION', 3600 * 24 * 30 * 3)
-DATASET_PATH = stutils.get_config('ST_FS_CACHE_PATH', '/tmp/.st_fs_cache')
-mkdir(DATASET_PATH)
+DEFAULT_PATH = '/tmp/.st_fs_cache'
 
 
 def _argstring(*args):
-    """Convert a list of variables into a single string for naming cache files
+    """Convert a list of variables into a single string for naming cache files.
+    It is used internally by many caching decorators
     """
     return "_".join([str(arg).replace("/", ".") for arg in args])
 
 
 class fs_cache(object):
     """ A decorator to cache results of functions returning
-    pd.DataFrame or pd.Series objects """
+    pd.DataFrame or pd.Series objects
 
-    def __init__(self, app_name, idx=1, cache_type='',
-                 expires=DEFAULT_EXPIRY, ds_path=DATASET_PATH):
+    Assuming you've configured `ST_FS_CACHE_PATH`,
+
+    Basic use case: just use file caching
+    (`get_data` cache files will be stored directly at `${ST_FS_CACHE_PATH}/`)
+    >>> @fs_cache()
+    ... def get_data(*args):
+    ...     return pd.DataFrame(range(10))
+
+    Separate cache by applications:
+    (`get_data` cache files will be stored at `${ST_FS_CACHE_PATH}/my_app`)
+    >>> myapp_fs_cache = fs_cache('my_app')
+    >>> @myapp_fs_cache
+    ... def get_data(*args):
+    ...     return pd.DataFrame(range(10))
+
+    Separate cache by applications and type:
+    (`get_data` cache files will be stored at
+        `${ST_FS_CACHE_PATH}/my_app/view_stats/`)
+    >>> myapp_fs_cache = fs_cache('my_app', cache_type='view_stats')
+    >>> @myapp_fs_cache
+    ... def get_data(*args):
+    ...     return pd.DataFrame(range(10))
+
+    Multiindex support: specify number of levels with `idx`:
+    >>> import numpy as np
+    >>> myapp_fs_cache = fs_cache(idx=2)
+    >>> @myapp_fs_cache
+    ... def get_data(*args):
+    ...     return pd.DataFrame(np.random.rand(10, 4)).set_index([0, 1])
+    """
+
+    def __init__(self, app_name=None, idx=1, cache_type='',
+                 expires=DEFAULT_EXPIRY, ds_path=None):
+        """
+
+        :param app_name: if present, cache files for this application will be
+            stored in a separate folder
+        :param idx: number of columns to use as an index
+        :param cache_type: if present, cache files within app directory will be
+            separated into different folders by their cache_type.
+        :param expires: cache duration in seconds
+        :param ds_path: set custom file cache path
+
+        I.e., by default all cache files will be stored in the path specified by
+        `ST_FS_CACHE_PATH`. If app_name is specified for the decorator
+        (`@fs_cache('my_app')`), cache files for the decorated function will be
+        stored in `${ST_FS_CACHE_PATH}/my_app`. If
+
+        """
+        if not ds_path:
+            ds_path = stutils.get_config('ST_FS_CACHE_PATH', DEFAULT_PATH)
+
         self.expires = expires
         self.idx = idx
         if not app_name:
             self.cache_path = ds_path
         else:
             self.cache_path = mkdir(ds_path, app_name + ".cache", cache_type)
+        if not os.path.isdir(self.cache_path):
+            mkdir(self.cache_path)
 
     def get_cache_fname(self, func_name, *args, **kwargs):
         chunks = [func_name]
@@ -61,6 +113,11 @@ class fs_cache(object):
                         "will cause inconsistent behavior with @fs_cache "
                         "decorator, please consider changing result type "
                         "to pd.Series", func.__name__)
+                if any(not isinstance(cname, str) for cname in df.columns):
+                    logging.warning(
+                        "Some of the dataframe columns aren't strings. "
+                        "This will result in inconsistent naming if read from "
+                        "filesystem cache.")
             elif isinstance(res, pd.Series):
                 df = pd.DataFrame(res)
             else:
@@ -107,7 +164,7 @@ def cached_method(func):
     def wrapper(self, *args):
         if not hasattr(self, "_cache"):
             self._cache = {}
-        key = "__".join((func.__name__,) + args)
+        key = _argstring((func.__name__,) + args)
         if key not in self._cache:
             self._cache[key] = func(self, *args)
         return self._cache[key]

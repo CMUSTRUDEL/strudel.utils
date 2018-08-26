@@ -2,24 +2,21 @@
 """
 Operations with files and Py2/3 compatibility tweaks
 """
+import six
 
 import os
 import subprocess
-import sys
-
-PY3 = sys.version_info[0] > 2
-
-if PY3:
-    from urllib.request import urlretrieve  # Python3
-    import queue
-    basestring = str
-else:
-    from urllib import urlretrieve  # Python2
-    import Queue as queue
-    basestring = basestring
+from typing import Any, Optional, Tuple, Union
 
 
 def mkdir(*args):
+    """Create a directory specified by a sequence of subdirectories
+
+    >>> mkdir("/tmp", "foo", "bar", "baz")
+    '/tmp/foo/bar/baz'
+    >>> os.path.isdir('/tmp/foo/bar/baz')
+    True
+    """
     path = ''
     for chunk in args:
         path = os.path.join(path, chunk)
@@ -29,6 +26,7 @@ def mkdir(*args):
 
 
 def shell(cmd, *args, **kwargs):
+    # type: (Union[str, unicode], *Union[str, unicode], **Any) ->Tuple[int, str]
     """ Execute shell command and return output
 
     :param cmd: the command itself, i.e. part until the first space
@@ -51,16 +49,27 @@ def shell(cmd, *args, **kwargs):
             raise e
         output = e.output
         status = e.returncode
+    except OSError as e:  # command not found
+        if kwargs.get('raise_on_status', True):
+            raise e
+        if 'stderr' in kwargs:
+            kwargs['stderr'].write(e.message)
+        return -1, ""
 
-    if PY3:
+    if six.PY3:
         output = output.decode('utf8')
     return status, output
 
 
-def raw_filesize(package_dir):
-    """ Get size of a file/directory in bytes
+def raw_filesize(path):
+    # type: (str) -> Optional[int]
+    """ Get size of a file/directory in bytes.
+
+    Will return None if path does not exist or cannot be accessed.
     """
-    status, output = shell("du", "-bs", package_dir)
+    status, output = shell("du", "-bs", path, raise_on_status=False,
+                           stderr=open('/dev/null', 'w'))
     if status != 0:
         return None
-    return int(output.split(" ", 1)[0])
+    # output is: <size>\t<path>\n
+    return int(output.split("\t", 1)[0])

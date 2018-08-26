@@ -1,5 +1,6 @@
 
 import pandas as pd
+import six
 
 import collections
 from functools import wraps
@@ -7,11 +8,10 @@ import logging
 import multiprocessing
 import threading
 import time
+from typing import Optional, Union
 import warnings
 # TODO: try to reuse native Threadpool
 # from multiprocessing.pool import ThreadPool
-
-from stutils.sysutils import queue
 
 CPU_COUNT = multiprocessing.cpu_count()
 
@@ -42,7 +42,7 @@ class ThreadPool(object):
         # so, we're not really limited with CPU and twice as many threads
         # is usually fine as a default
         self.n = n_workers or CPU_COUNT * 2
-        self.queue = queue.Queue()
+        self.queue = six.moves.queue.Queue()
         self.callback_semaphore = threading.Lock()
 
     def start(self):
@@ -52,7 +52,7 @@ class ThreadPool(object):
             while self.started or not self.queue.empty():
                 try:
                     func, args, kwargs, callback = self.queue.get(False)
-                except queue.Empty:
+                except six.moves.queue.Empty:
                     time.sleep(0.1)
                     continue
                 else:
@@ -100,6 +100,7 @@ class ThreadPool(object):
 
 
 def map(func, data, num_workers=None):
+    # type: (callable, Union[list, tuple, pd.DataFrame, pd.Series, dict], Optional[int]) -> Union[list, tuple, pd.DataFrame, pd.Series, dict]
     """ Map an iterable using multithreading
     >>> s = pd.Series(range(120, 0, -1))
     >>> s2 = map(lambda i, x: x ** 3.75, s)

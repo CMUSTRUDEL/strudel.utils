@@ -12,7 +12,7 @@ setup(
     # whenever you're updating the next three lines
     # please also update oscar.py
     name="strudel.utils",
-    version="0.1",
+    version="0.2",
     author='Marat (@cmu.edu)',
 
     description="Various utils used internally by strudel.* packages",
@@ -29,6 +29,7 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Topic :: Scientific/Engineering'
     ],
+    platforms=["Linux", "Solaris", "Mac OS-X", "Unix"],
     python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, <4',
     packages=['stutils'],
     license="GPL v3.0",

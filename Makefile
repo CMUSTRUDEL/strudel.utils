@@ -4,7 +4,7 @@ TESTROOT = stutils
 
 .PHONY: test
 test:
-	python -m doctest $(TESTROOT)/* #; python -m unittest test
+	python -m unittest test
 
 .PHONY: publish
 publish:
@@ -12,6 +12,7 @@ publish:
 	$(MAKE) test
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
+	$(MAKE) clean
 
 .PHONY: clean
 clean:
@@ -26,5 +27,6 @@ html:
 
 .PHONY: install_dev
 install_dev:
-	pip install --user -r requirements.txt
-	pip install --user  sphinx sphinx-autobuild
+	pip install --user --upgrade pytest requests
+	pip install --user --upgrade -r requirements.txt
+	pip install --user --upgrade sphinx sphinx-autobuild

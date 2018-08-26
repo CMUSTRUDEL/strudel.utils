@@ -1,8 +1,10 @@
 
 import re
+from typing import Union
 
 
 def is_alpha(version):
+    # type: (Union[str, unicode]) -> bool
     """ Check whether the provided version is not a stable release
     This method is looking if version matches to digits and dots only
     :param version: str, version string
@@ -19,7 +21,7 @@ def is_alpha(version):
 
 
 def parse(version):
-    # type: (str) -> list
+    # type: (Union[str, unicode]) -> list
     """ Transform version string into comparable list
     :param version: version string, e.g. 0.11.23rc1
     :return: list of version chunks, e.g. [0, 11, 23, 'rc1']
@@ -42,9 +44,10 @@ def parse(version):
 
 
 def compare(ver1, ver2):
-    # type: (str, str) -> int
+    # type: (Union[str, unicode], Union[str, unicode]) -> int
     """Compares two version string, returning {-1|0|1} just as cmp().
     (-1: ver1 < ver2, 0: ver1==ver2, 1: ver1 > ver2)
+
     >>> compare("0.1.1", "0.1.2")
     -1
     >>> compare("0.1.2", "0.1.1")

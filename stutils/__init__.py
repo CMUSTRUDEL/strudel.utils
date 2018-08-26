@@ -6,6 +6,7 @@ try:
 except ImportError:
     settings = object()
 
+__version__ = "0.2"
 CONFIG = {}
 
 
@@ -22,11 +23,17 @@ def get_config(variable, default=None):
         3. environment variable
 
     Known config vars so far:
+        strudel.utils
         ST_FS_CACHE_DURATION - duration of filesystem cache in seconds
         ST_FS_CACHE_PATH - path to the folder to store filesystem cache
 
+        strudel.ecosystems
         PYPI_SAVE_PATH - place to store downloaded PyPI packages
         PYPI_TIMEOUT - network timeout for PyPI API
+
+        strudel.scraper
+        GITHUB_API_TOKENS - comma separated list of GitHub tokens
+        GITLAB_API_TOKENS - same for GitLab API
     """
     if variable in CONFIG:
         return CONFIG[variable]
