@@ -1,4 +1,28 @@
 
+"""
+Alternative approaches:
+
+`asyncio`
+
+    - Python 3.4+. Unfortunately, I have to support Python 2, mainly because of
+        OSCAR project compatibility
+
+`concurrent.futures`
+
+    - available since Python 3.2, but there is a backport
+        https://pypi.org/project/futures/
+    - backport follows pretty much the same pattern but still needs a wrapper
+        to support pandas objects. Native version (Python 3.2+) might give
+        some performance advantages
+
+
+native `ThreadPool` (`from multiprocessing.pool import ThreadPool`):
+
+    - 30..50% slower than this implementation
+        (see test.TestMapReduce.test_native_threadpool)
+    - (minor) doesn't support pandas objects
+"""
+
 import pandas as pd
 import six
 
@@ -10,8 +34,7 @@ import threading
 import time
 from typing import Optional, Union
 import warnings
-# TODO: try to reuse native Threadpool
-# from multiprocessing.pool import ThreadPool
+
 
 CPU_COUNT = multiprocessing.cpu_count()
 

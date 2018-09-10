@@ -141,7 +141,7 @@ class TestMapReduce(unittest.TestCase):
         logging.info("Async mapping: %s seconds, sync baseline: %s"
                      "" % (perf, self.baseline_perf))
 
-    def test_new_pool(self):
+    def test_native_threadpool(self):
         # this test shows native Threadpool is 30..50% slower
         from multiprocessing.pool import ThreadPool
 

@@ -14,7 +14,6 @@ setup(
     name="strudel.utils",
     version="0.2",
     author='Marat (@cmu.edu)',
-
     description="Various utils used internally by strudel.* packages",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -29,7 +28,7 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Topic :: Scientific/Engineering'
     ],
-    platforms=["Linux", "Solaris", "Mac OS-X", "Unix"],
+    platforms=["Linux", "Solaris", "Mac OS-X", "Unix", "Windows"],
     python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, <4',
     packages=['stutils'],
     license="GPL v3.0",

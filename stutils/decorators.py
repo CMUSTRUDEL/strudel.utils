@@ -1,15 +1,17 @@
 
+import pandas as pd
+
 import os
 import time
 import logging
 from functools import wraps
+import tempfile
 
-import pandas as pd
 import stutils
 from stutils.sysutils import mkdir
 
 DEFAULT_EXPIRY = stutils.get_config('ST_FS_CACHE_DURATION', 3600 * 24 * 30 * 3)
-DEFAULT_PATH = '/tmp/.st_fs_cache'
+DEFAULT_PATH = os.path.join(tempfile.gettempdir(), '.st_fs_cache')
 
 
 def _argstring(*args):
