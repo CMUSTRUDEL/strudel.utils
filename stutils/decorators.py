@@ -1,9 +1,11 @@
 
+import ijson.backends.yajl2 as ijson
 import pandas as pd
 
+import json
+import logging
 import os
 import time
-import logging
 from functools import wraps
 import tempfile
 
@@ -175,3 +177,39 @@ def cached_method(func):
 
 def cached_property(func):
     return property(cached_method(func))
+
+
+class cache_iterator(fs_cache):
+    """ A modification of fs_cache to handle large unstructured iterators
+        - e.g., a result of a GitHubAPI call
+    """
+    def __call__(self, func):
+        @wraps(func)
+        def wrapper(*args):
+            kwargs = {'extension': 'json'}
+            cache_fpath = self.get_cache_fname(func.__name__, *args, **kwargs)
+
+            if not self.expired(cache_fpath):
+                cache_fh = open(cache_fpath, 'rb')
+                for item in ijson.items(cache_fh, "item"):
+                    yield item
+            else:
+                cache_fh = open(cache_fpath, 'wb')
+                try:
+                    sep = "[\n"
+                    for item in func(*args):
+                        cache_fh.write(sep)
+                        sep = ",\n"
+                        cache_fh.write(json.dumps(item))
+                        yield item
+                    cache_fh.write("]")
+                    cache_fh.close()
+                except Exception as e:
+                    try:
+                        cache_fh.close()
+                        os.remove(cache_fpath)
+                    except:
+                        pass
+                    raise e
+
+        return wrapper
