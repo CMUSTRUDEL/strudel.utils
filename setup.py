@@ -12,7 +12,7 @@ setup(
     # whenever you're updating the next three lines
     # please also update oscar.py
     name="strudel.utils",
-    version="0.2",
+    version="0.2.1",  # make sure to update __init__.py.__version__
     author='Marat (@cmu.edu)',
     description="Various utils used internally by strudel.* packages",
     long_description=open('README.md').read(),
