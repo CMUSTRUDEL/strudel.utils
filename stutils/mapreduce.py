@@ -188,7 +188,7 @@ def map(func, data, num_workers=None):
 
 class MapReduce(object):
     """ Helper to process large volumes of information
-    It employes configured backend
+    It employs configured backend
 
     Workflow:
         (input of every function passed to the next one)
@@ -197,7 +197,7 @@ class MapReduce(object):
         at least map() or reduce() should be defined.
         pre/post processing is intended for reusable classes, useless otherwise
 
-    Use:
+    Usage example:
         class Processor(MapRedue):
             # NOTE: all methods are static, i.e. no self
 

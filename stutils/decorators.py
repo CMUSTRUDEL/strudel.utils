@@ -186,30 +186,26 @@ class cache_iterator(fs_cache):
     def __call__(self, func):
         @wraps(func)
         def wrapper(*args):
-            kwargs = {'extension': 'json'}
-            cache_fpath = self.get_cache_fname(func.__name__, *args, **kwargs)
+            cache_fpath = self.get_cache_fname(
+                func.__name__, *args, **{'extension': 'json'})
 
             if not self.expired(cache_fpath):
                 cache_fh = open(cache_fpath, 'rb')
                 for item in ijson.items(cache_fh, "item"):
                     yield item
             else:
-                cache_fh = open(cache_fpath, 'wb')
-                try:
-                    sep = "[\n"
-                    for item in func(*args):
-                        cache_fh.write(sep)
-                        sep = ",\n"
-                        cache_fh.write(json.dumps(item))
-                        yield item
-                    cache_fh.write("]")
-                    cache_fh.close()
-                except Exception as e:
-                    try:
-                        cache_fh.close()
-                        os.remove(cache_fpath)
-                    except:
-                        pass
-                    raise e
+                # if iterator is not exhausted, the resulting file
+                # will contain invalid JSON. So, we write to a tempfile
+                # and rename when the iterator is exhausted
+                cache_fh = tempfile.NamedTemporaryFile(delete=False)
+                sep = "[\n"
+                for item in func(*args):
+                    cache_fh.write(sep)
+                    sep = ",\n"
+                    cache_fh.write(json.dumps(item))
+                    yield item
+                cache_fh.write("]")
+                cache_fh.close()
+                os.rename(cache_fh.name, cache_fpath)
 
         return wrapper

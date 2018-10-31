@@ -1,5 +1,6 @@
 
 from setuptools import setup
+from stutils import __version__ as version
 
 requirements = [
     line.strip()
@@ -12,7 +13,7 @@ setup(
     # whenever you're updating the next three lines
     # please also update oscar.py
     name="strudel.utils",
-    version="0.2.3",  # make sure to update __init__.py.__version__
+    version=version,
     author='Marat (@cmu.edu)',
     description="Various utils used internally by strudel.* packages",
     long_description=open('README.md').read(),
