@@ -7,7 +7,7 @@ except ImportError:
     settings = object()
 
 # make sure to update setup.py
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 CONFIG = {}
 
 
