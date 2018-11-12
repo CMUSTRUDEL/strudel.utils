@@ -4,7 +4,8 @@ TESTROOT = stutils
 
 .PHONY: test
 test:
-	python -m unittest test
+	python2 -m unittest test
+	python3 -m unittest test
 
 .PHONY: publish
 publish:
