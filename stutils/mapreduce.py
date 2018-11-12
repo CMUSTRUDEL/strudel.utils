@@ -21,6 +21,7 @@ native `ThreadPool` (`from multiprocessing.pool import ThreadPool`):
     - 30..50% slower than this implementation
         (see test.TestMapReduce.test_native_threadpool)
     - (minor) doesn't support pandas objects
+
 """
 
 import pandas as pd
@@ -55,9 +56,22 @@ def guard(semaphore):
 
 
 class ThreadPool(object):
+    """ A slightly more performant replacement for native ThreadPool.
+
+    States:
+        started, stopped
+        False, False: just created, threads don't run yet
+            probably building up queue of tasks in the main thread
+        False, True: terminated before start. Shouldn't happen in the wild.
+            pretty useless state, identical to False, False
+        True, False: started and processing
+        True, True: finished processing or terminated
+
+    """
     _threads = None
     queue = None
     started = False
+    stopped = False
     callback_semaphore = None
 
     def __init__(self, n_workers=None):
@@ -69,10 +83,19 @@ class ThreadPool(object):
         self.callback_semaphore = threading.Lock()
 
     def start(self):
-        assert not self.started, "The pool is already started"
+        if self.started:
+            logging.warning("The pool is already started")
+            return
 
         def worker():
-            while self.started or not self.queue.empty():
+            while not self.stopped and (self.started or not self.queue.empty()):
+                # self.stopped: Terminate immediately
+                # self.started, queue is not empty: normal processing
+                # self.started, queue is empty: waiting for main thread
+                #   to submit more tasks
+                # not self.started, queue is not empty: shutting down gracefully
+                # not self.started, queue is empty: done, exit
+
                 try:
                     func, args, kwargs, callback = self.queue.get(False)
                 except six.moves.queue.Empty:
@@ -101,11 +124,11 @@ class ThreadPool(object):
         [t.start() for t in self._threads]
 
     def submit(self, func, *args, **kwargs):
-        # submit is executed from the main thread and expected to by synchronous
-        callback = kwargs.get('callback')
+        # submit is executed from the main thread and expected to be synchronous
+        callback = None
         if 'callback' in kwargs:
+            callback = kwargs.pop('callback')
             assert callable(callback), "Callback must be callable"
-            del(kwargs['callback'])
 
         self.queue.put((func, args, kwargs, callback))
 
@@ -113,10 +136,18 @@ class ThreadPool(object):
             self.start()
 
     def shutdown(self):
+        """Wait for all threads to complete"""
         # cleanup
         self.started = False
-        for t in self._threads:
-            t.join()
+        try:
+            # nice way of doing things - let's wait until all items
+            # in the queue are processed
+            for t in self._threads:
+                t.join()
+        finally:
+            # Emergency brake - if a KeyboardInterrupt is raised,
+            # threads will finish processing current task and exit
+            self.stopped = True
 
     def __del__(self):
         self.shutdown()
