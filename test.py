@@ -1,14 +1,16 @@
 
 from __future__ import unicode_literals, print_function
 
-
-import logging
 import numpy as np
-import os
 import pandas as pd
 import requests
+
+import logging
+import os
+import random
 import subprocess
 import time
+import types
 import unittest
 
 from stutils import decorators as d
@@ -101,6 +103,31 @@ class TestDecorators(unittest.TestCase):
         self.assertTrue((cdf(10, 2, 'one') == cdf(10, 2, 'one')).all(None))
         self.assertIsNot(cdf(10, 2, 'one'), cdf(10, 2, 'one'))
 
+    def test_cache_iterator(self):
+        # just in case those are set in environment variables
+        defaults = {
+            'ds_path': d.DEFAULT_PATH,
+            'expires': 3
+        }
+
+        def test_iterator(*args):
+            yield "string"
+            yield random.randint(0, 10000)
+            yield ['one', 'tow', 1]
+
+        # no app, no type
+        iter = d.cache_iterator(**defaults)(test_iterator)
+        res = iter('one')
+        res_list = list(res)
+        res2 = iter('one')
+        res_list2 = list(res2)
+        res_list3 = list(iter('two'))
+        # check result is still a generator
+        self.assertIsInstance(res, types.GeneratorType)
+        self.assertTrue(res_list == res_list2)
+        self.assertIsNot(res, res2)
+        self.assertFalse(res_list == res_list3)
+
 
 class TestMapReduce(unittest.TestCase):
 
@@ -156,36 +183,7 @@ class TestMapReduce(unittest.TestCase):
         logging.info("Native ThreadPool mapping: %s seconds, sync baseline: %s"
                      "" % (perf, self.baseline_perf))
 
-    def test_mapreduce(self):
-        # this test shows there is virtually no overhead in the provided map()
-
-        def do(number, url):
-            return requests.get(url).status_code
-
-        start = time.time()
-        results = mapreduce.map(do, self.urls)
-        perf = time.time() - start
-        self.assertSequenceEqual(self.reference_results, results)
-        logging.info("Mapreduce mapping: %s seconds, sync baseline: %s"
-                     "" % (perf, self.baseline_perf))
-
-        # pandas Series
-        s = pd.Series(self.urls)
-        results = mapreduce.map(do, s)
-        self.assertIsInstance(results, pd.Series)
-        self.assertTrue((pd.Series(self.reference_results) == results).all())
-
-        # pd.DataFrame
-        df = pd.DataFrame({'url': s})
-
-        def do(index, row):
-            return requests.get(row['url']).status_code
-
-        results = mapreduce.map(do, df)
-        self.assertIsInstance(results, pd.DataFrame)
-        self.assertEqual(results.shape, (len(s), 1))
-        self.assertTrue(
-            (pd.Series(self.reference_results) == results.iloc[:, 0]).all())
+''
 
 
 class TestEmailUtils(unittest.TestCase):
@@ -334,6 +332,7 @@ class TestSysutils(unittest.TestCase):
         status, output = sysutils.shell(
             "ls", "eatmyshorts", raise_on_status=False, stderr=stderr)
         self.assertEqual(status, 2)
+        stderr.close()
 
     def test_filesize(self):
         rel_path = os.path.dirname(__file__) or '.'
