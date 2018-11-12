@@ -97,9 +97,10 @@ def university_domains():
     ).to_csv("email_university_domains.csv", index=False)
     ```
     """
-    fh = open(
-        os.path.join(os.path.dirname(__file__), "email_university_domains.csv"))
-    return set(addr_domain.strip() for addr_domain in fh)
+    fpath = os.path.join(
+        os.path.dirname(__file__), "email_university_domains.csv")
+    with open(fpath) as fh:
+        return set(addr_domain.strip() for addr_domain in fh)
 
 
 @memoize
@@ -137,9 +138,9 @@ def public_domains():
     >>> 'jaraco.com' in public_domains()
     False
     """
-    fh = open(
-        os.path.join(os.path.dirname(__file__), "email_public_domains.csv"))
-    return set(addr_domain.strip() for addr_domain in fh)
+    fpath = os.path.join(os.path.dirname(__file__), "email_public_domains.csv")
+    with open(fpath) as fh:
+        return set(addr_domain.strip() for addr_domain in fh)
 
 
 @memoize

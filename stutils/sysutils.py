@@ -67,8 +67,9 @@ def raw_filesize(path):
 
     Will return None if path does not exist or cannot be accessed.
     """
-    status, output = shell("du", "-bs", path, raise_on_status=False,
-                           stderr=open('/dev/null', 'w'))
+    with open('/dev/null', 'w') as devnull:
+        status, output = shell("du", "-bs", path, raise_on_status=False,
+                               stderr=devnull)
     if status != 0:
         return None
     # output is: <size>\t<path>\n

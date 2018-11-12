@@ -197,9 +197,9 @@ class cache_iterator(fs_cache):
                 func.__name__, *args, **{'extension': 'json'})
 
             if not self.expired(cache_fpath):
-                cache_fh = open(cache_fpath, 'rb')
-                for item in ijson.items(cache_fh, "item"):
-                    yield item
+                with open(cache_fpath, 'rb') as cache_fh:
+                    for item in ijson.items(cache_fh, "item"):
+                        yield item
                 return
 
             # if iterator is not exhausted, the resulting file
