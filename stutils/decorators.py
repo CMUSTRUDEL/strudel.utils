@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import logging
 import os
+import shutil
 import time
 from functools import wraps
 import tempfile
@@ -105,7 +106,7 @@ class fs_cache(object):
             cache_fpath = self.get_cache_fname(func.__name__, *args)
 
             if not self.expired(cache_fpath):
-                return pd.read_csv(cache_fpath, index_col=range(self.idx),
+                return pd.read_csv(cache_fpath, index_col=list(range(self.idx)),
                                    encoding="utf8", squeeze=True)
 
             res = func(*args)
@@ -182,6 +183,12 @@ def cached_property(func):
 class cache_iterator(fs_cache):
     """ A modification of fs_cache to handle large unstructured iterators
         - e.g., a result of a GitHubAPI call
+
+    Special cases:
+        json always saves dict keys as strings, so cached dictionaries aren't
+            exactly the same as original
+        in Python2, json instantiates loaded strings as unicode, so cached
+            result might be slightly different from original
     """
     def __call__(self, func):
         @wraps(func)
@@ -193,19 +200,25 @@ class cache_iterator(fs_cache):
                 cache_fh = open(cache_fpath, 'rb')
                 for item in ijson.items(cache_fh, "item"):
                     yield item
-            else:
-                # if iterator is not exhausted, the resulting file
-                # will contain invalid JSON. So, we write to a tempfile
-                # and rename when the iterator is exhausted
-                cache_fh = tempfile.NamedTemporaryFile(delete=False)
-                sep = "[\n"
-                for item in func(*args):
-                    cache_fh.write(sep)
-                    sep = ",\n"
-                    cache_fh.write(json.dumps(item))
-                    yield item
-                cache_fh.write("]")
-                cache_fh.close()
-                os.rename(cache_fh.name, cache_fpath)
+                return
+
+            # if iterator is not exhausted, the resulting file
+            # will contain invalid JSON. So, we write to a tempfile
+            # and rename when the iterator is exhausted
+            cache_fh = tempfile.TemporaryFile()
+            sep = "[\n"
+            for item in func(*args):
+                cache_fh.write(sep.encode('utf8'))
+                sep = ",\n"
+                cache_fh.write(json.dumps(item).encode('utf8'))
+                yield item
+            cache_fh.write("]".encode('utf8'))
+            cache_fh.flush()
+            # os.rename will fail if /tmp is mapped to a different device
+            cache_fh.seek(0, 0)
+            target_fh = open(cache_fpath, 'wb')
+            shutil.copyfileobj(cache_fh, target_fh)
+            target_fh.close()
+            cache_fh.close()
 
         return wrapper
