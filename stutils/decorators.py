@@ -206,7 +206,8 @@ class cache_iterator(fs_cache):
             # will contain invalid JSON. So, we write to a tempfile
             # and rename when the iterator is exhausted
             cache_fh = tempfile.TemporaryFile()
-            sep = "[\n"
+            cache_fh.write("[\n".encode('utf8'))
+            sep = ""
             for item in func(*args):
                 cache_fh.write(sep.encode('utf8'))
                 sep = ",\n"

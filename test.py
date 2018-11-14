@@ -111,6 +111,8 @@ class TestDecorators(unittest.TestCase):
         }
 
         def test_iterator(*args):
+            if args and args[0] == 'empty':
+                return
             yield "string"
             yield random.randint(0, 10000)
             yield ['one', 'tow', 1]
@@ -120,13 +122,20 @@ class TestDecorators(unittest.TestCase):
         res = iter('one')
         res_list = list(res)
         res2 = iter('one')
-        res_list2 = list(res2)
-        res_list3 = list(iter('two'))
+        res2_list = list(res2)
+        res3_list = list(iter('two'))
         # check result is still a generator
         self.assertIsInstance(res, types.GeneratorType)
-        self.assertTrue(res_list == res_list2)
+        self.assertIsInstance(res2, types.GeneratorType)
+        self.assertTrue(res_list == res2_list)
         self.assertIsNot(res, res2)
-        self.assertFalse(res_list == res_list3)
+        self.assertFalse(res_list == res3_list)
+
+        res4 = iter('empty')
+        res4_list = list(res4)
+        res5_list = list(iter('empty'))
+        self.assertIsInstance(res4, types.GeneratorType)
+        self.assertTrue(res4_list == res5_list)
 
 
 class TestMapReduce(unittest.TestCase):
