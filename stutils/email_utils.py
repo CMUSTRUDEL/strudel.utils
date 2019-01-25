@@ -4,8 +4,6 @@ import os
 import pandas as pd
 import six
 
-from typing import Optional, Tuple, Union
-
 from stutils.decorators import memoize
 
 
@@ -14,12 +12,12 @@ class InvalidEmail(ValueError):
 
 
 def parse(raw_email):
-    # type: (Union[str, unicode]) -> Tuple[str, str]
+    # type: (six.string_types) -> Tuple[six.string_types, six.string_types]
     """Extract email from a full address. Example:
       'John Doe <jdoe+github@foo.com>' -> jdoe@foo.com
 
     >>> parse("John Doe <me+github.com@someorg.com")
-    'me@someorg.com'
+    ('me', 'someorg.com')
     >>> parse(42)
     Traceback (most recent call last):
         ...
@@ -42,9 +40,9 @@ def parse(raw_email):
 
 
 def clean(raw_email):
-    # type: (Union[str, unicode]) -> Optional[str]
-    """Extract email from a full address. Example:
-      'John Doe <jdoe+github@foo.com>' -> jdoe@foo.com
+    # type: (six.string_types) -> Optional[str]
+    """Extract email from a full address.
+    Example: 'John Doe <jdoe+github@foo.com>' -> jdoe@foo.com
 
     >>> clean(42) is None
     True

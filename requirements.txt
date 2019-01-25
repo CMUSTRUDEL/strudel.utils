@@ -1,7 +1,5 @@
 # requires yajl: sudo apt-get install yajl-tools
 ijson
-
 numpy
 pandas >=0.23
-requests
 six

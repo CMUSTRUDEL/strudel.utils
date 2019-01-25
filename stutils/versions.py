@@ -1,6 +1,5 @@
 
 import re
-from typing import Union
 
 
 def is_alpha(version):
@@ -17,7 +16,7 @@ def is_alpha(version):
     >>> is_alpha("0.0.0.0")
     False
     """
-    return not re.match("^\d+(\.\d+)*$", version.strip())
+    return not re.match(r"^\d+(\.\d+)*$", version.strip())
 
 
 def parse(version):

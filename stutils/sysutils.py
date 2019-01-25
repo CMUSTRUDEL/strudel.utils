@@ -1,12 +1,11 @@
 
 """
-Operations with files and Py2/3 compatibility tweaks
+Operations with files
 """
 import six
 
 import os
 import subprocess
-from typing import Any, Optional, Tuple, Union
 
 
 def mkdir(*args):
@@ -29,14 +28,18 @@ def shell(cmd, *args, **kwargs):
     # type: (Union[str, unicode], *Union[str, unicode], **Any) ->Tuple[int, str]
     """ Execute shell command and return output
 
-    :param cmd: the command itself, i.e. part until the first space
-    :param args: positional arguments, i.e. other space-separated parts
-    :param kwargs:
-            rel_path: execute relative to the path
-            raise_on_status: bool, raise exception if command
-                exited with non-zero status (default: `True`)
-            stderr: file-like object to collect stderr output, None by default
-    :return: (int status, str shell output)
+    Args:
+        cmd (str): the command itself, i.e. part until the first space
+        *args: positional arguments, i.e. other space-separated parts
+        rel_path (bool): execute relative to the path (default: `False`)
+        raise_on_status(bool): bool, raise exception if command
+            exited with non-zero status (default: `True`)
+        stderr (file-like): file-like object to collect stderr output,
+            None by default
+
+    Returns:
+        Tuple[int, str]: status, shell output
+
     """
     if kwargs.get('rel_path') and not cmd.startswith("/"):
         cmd = os.path.join(kwargs['rel_path'], cmd)
