@@ -9,11 +9,9 @@ test:
 
 .PHONY: publish
 publish:
-	$(MAKE) clean
-	$(MAKE) test
-	python setup.py sdist bdist_wheel
-	twine upload dist/*
-	$(MAKE) clean
+	test $$(git config user.name) || git config user.name "semantic-release (via TravisCI)"
+	test $$(git config user.email) || git config user.email "semantic-release@travis"
+	semantic-release publish
 
 .PHONY: clean
 clean:
@@ -28,8 +26,9 @@ html:
 
 .PHONY: install
 install:
-	pip install -r requirements.txt
+	sudo apt-get update
 	sudo apt-get install yajl-tools
+	pip install -r requirements.txt
 
 .PHONY: install_dev
 install_dev:
