@@ -10,7 +10,7 @@ import os
 import random
 import subprocess
 import time
-import types
+from typing import Generator
 import unittest
 
 from stutils import decorators as d
@@ -125,8 +125,8 @@ class TestDecorators(unittest.TestCase):
         res2_list = list(res2)
         res3_list = list(iter('two'))
         # check result is still a generator
-        self.assertIsInstance(res, types.GeneratorType)
-        self.assertIsInstance(res2, types.GeneratorType)
+        self.assertIsInstance(res, Generator)
+        self.assertIsInstance(res2, Generator)
         self.assertTrue(res_list == res2_list)
         self.assertIsNot(res, res2)
         self.assertFalse(res_list == res3_list)
@@ -134,7 +134,7 @@ class TestDecorators(unittest.TestCase):
         res4 = iter('empty')
         res4_list = list(res4)
         res5_list = list(iter('empty'))
-        self.assertIsInstance(res4, types.GeneratorType)
+        self.assertIsInstance(res4, Generator)
         self.assertTrue(res4_list == res5_list)
 
 
@@ -191,6 +191,7 @@ class TestMapReduce(unittest.TestCase):
         self.assertSequenceEqual(self.reference_results, results)
         logging.info("Native ThreadPool mapping: %s seconds, sync baseline: %s"
                      "" % (perf, self.baseline_perf))
+
 
 ''
 

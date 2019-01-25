@@ -9,6 +9,7 @@ import shutil
 import time
 from functools import wraps
 import tempfile
+import threading
 
 import stutils
 from stutils.sysutils import mkdir
@@ -223,3 +224,22 @@ class cache_iterator(fs_cache):
             cache_fh.close()
 
         return wrapper
+
+
+def guard(func):
+    """ Prevents the decorated function from parallel execution.
+
+     Internally, this decorator creates a Lock object and transparently
+     obtains/releases it when calling the function.
+     """
+    semaphore = threading.Lock()
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        semaphore.acquire()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            semaphore.release()
+
+    return wrapper
