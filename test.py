@@ -173,7 +173,7 @@ class TestMapReduce(unittest.TestCase):
         perf = time.time() - start
 
         self.assertSequenceEqual(self.reference_results, results)
-        self.assertGreater(self.baseline_perf/perf, 4)
+        self.assertGreater(self.baseline_perf/perf, 3.5)
         logging.info("Async mapping: %s seconds, sync baseline: %s"
                      "" % (perf, self.baseline_perf))
 

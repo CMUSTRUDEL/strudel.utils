@@ -27,13 +27,13 @@ jobs:
     script: make html
 
     deploy:
-#      - provider: pages
-#        skip-cleanup: true
-#        github-token: $GH_TOKEN
-#        keep-history: true
-#        on:
-#          branch: master
-#        local-dir: docs/build/html
+      - provider: pages
+        skip-cleanup: true
+        github-token: $GH_TOKEN
+        keep-history: true
+        on:
+          branch: master
+        local-dir: docs/build/html
 
       - provider: script
         skip_cleanup: true
