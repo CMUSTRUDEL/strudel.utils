@@ -1,6 +1,16 @@
+#!/usr/bin/env python
 
+import os
+import re
 from setuptools import setup
-from stutils import __version__ as version
+
+# get author, version and license from package files
+# since it has some not yet installed dependencies, parsing the file:
+package = 'stutils'
+head = open(os.path.join(package, '__init__.py')).read(2048)
+pattern = r"""__%s__\s*=\s*['"]([^'"]*)['"]"""
+kwargs = {keyword: re.search(pattern % keyword, head).group(1)
+          for keyword in ('version', 'author', 'license')}
 
 requirements = [
     line.strip()
@@ -10,11 +20,7 @@ requirements = [
 # options reference: https://docs.python.org/2/distutils/
 # see also: https://packaging.python.org/tutorials/distributing-packages/
 setup(
-    # whenever you're updating the next three lines
-    # please also update oscar.py
     name="strudel.utils",
-    version=version,
-    author='Marat (@cmu.edu)',
     description="Various utils used internally by strudel.* packages",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -25,15 +31,15 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: POSIX :: Linux',
         'Topic :: Scientific/Engineering'
     ],
     platforms=["Linux", "Solaris", "Mac OS-X", "Unix", "Windows"],
-    python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, <4',
-    packages=['stutils'],
-    license="GPL v3.0",
-    author_email='marat@cmu.edu',
+    python_requires='>2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
+    packages=[package],
     url='https://github.com/cmustrudel/strudel.utils',
-    install_requires=requirements
+    install_requires=requirements,
+    **kwargs
 )

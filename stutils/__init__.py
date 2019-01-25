@@ -1,4 +1,8 @@
 
+"""
+
+"""
+
 import os
 
 try:
@@ -6,17 +10,22 @@ try:
 except ImportError:
     settings = object()
 
-# make sure to update setup.py
 __version__ = "0.3.1"
+__author__ = "Marat (@cmu.edu)"
+__license__ = "GPL v3"
+
 CONFIG = {}
 
 
 def get_config(variable, default=None):
     """ Get configuration variable for strudel.* packages
 
-    :param variable: str, name of the variable
-    :param default: value to use of config variable not set
-    :return: variable value
+    Args:
+        variable (str): name of the config variable
+        default: value to use of config variable not set
+
+    Returns:
+        variable value
 
     Order of search:
         1. stutils.CONFIG

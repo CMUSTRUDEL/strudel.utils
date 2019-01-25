@@ -4,8 +4,8 @@ TESTROOT = stutils
 
 .PHONY: test
 test:
-	python2 -m unittest test
-	python3 -m unittest test
+	python -m doctest $(TESTROOT)/*.py
+	python -m unittest test
 
 .PHONY: publish
 publish:
@@ -26,8 +26,13 @@ clean:
 html:
 	sphinx-build -M html "docs" "docs/build"
 
+.PHONY: install
+install:
+	pip install -r requirements.txt
+	apt-get install yajl-tools
+
 .PHONY: install_dev
 install_dev:
-	pip install --user --upgrade pytest requests
-	pip install --user --upgrade -r requirements.txt
-	pip install --user --upgrade sphinx sphinx-autobuild
+	$(MAKE) install
+	pip install typing requests sphinx sphinx-autobuild
+	pip install python-semantic-release==3.11.2
