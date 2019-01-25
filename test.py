@@ -156,7 +156,7 @@ class TestMapReduce(unittest.TestCase):
         # logging.basicConfig(level=logging.INFO)
 
     def test_thread_pool(self):
-        tp = mapreduce.ThreadPool()
+        tp = mapreduce.ThreadPool(8)
         results_dict = {}
 
         def callback(res):
