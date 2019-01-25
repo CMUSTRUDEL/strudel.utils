@@ -33,5 +33,6 @@ install:
 .PHONY: install_dev
 install_dev:
 	$(MAKE) install
+	pip install requests
 	pip install typing requests sphinx sphinx-autobuild
 	pip install python-semantic-release==3.11.2
