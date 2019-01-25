@@ -18,15 +18,19 @@ def parse(raw_email):
 
     >>> parse("John Doe <me+github.com@someorg.com")
     ('me', 'someorg.com')
-    >>> parse(42)
+    >>> parse(42)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
-    InvalidEmail
+    InvalidEmail: 'Invalid email: 42'
+    >>> parse(None)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+        ...
+    InvalidEmail: 'None or NaN is not a valid email address'
     """
     if not isinstance(raw_email, six.string_types):
-        raise InvalidEmail
+        raise InvalidEmail("Invalid email: %s" % raw_email)
     if not raw_email or pd.isnull(raw_email):
-        raise InvalidEmail
+        raise InvalidEmail("None or NaN is not a valid email address")
     email = raw_email.split("<", 1)[-1].split(">", 1)[0]
     chunks = email.split("@", 3)
     # git-svn generates emails with several @, e.g.:
