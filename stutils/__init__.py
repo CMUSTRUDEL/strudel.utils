@@ -10,7 +10,7 @@ try:
 except ImportError:
     settings = object()
 
-__version__ = "0.3.1"
+__version__ = '0.4.0'
 __author__ = "Marat (@cmu.edu)"
 __license__ = "GPL v3"
 
