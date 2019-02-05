@@ -1,4 +1,5 @@
-dist: xenial
+# do not use xenial, or it will fail pages deploy
+# https://travis-ci.community/t/failed-to-deploy-because-of-ruby-error/1143
 sudo: required
 language: python
 python:
@@ -27,14 +28,6 @@ jobs:
     script: make html
 
     deploy:
-      - provider: pages
-        skip-cleanup: true
-        github-token: $GH_TOKEN
-        keep-history: true
-        on:
-          branch: master
-        local-dir: docs/build/html
-
       - provider: script
         skip_cleanup: true
         on:
@@ -47,6 +40,14 @@ jobs:
         on:
           tags: true
         file: dist/*
+
+      - provider: pages
+        skip-cleanup: true
+        github-token: $GH_TOKEN
+        keep-history: true
+        on:
+          branch: master
+        local-dir: docs/build/html
 
 after_failure:
   - pip freeze

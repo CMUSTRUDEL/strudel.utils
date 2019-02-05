@@ -1,7 +1,4 @@
 
-import ijson.backends.yajl2 as ijson
-import pandas as pd
-
 import json
 import logging
 import os
@@ -11,6 +8,7 @@ from functools import wraps
 import tempfile
 import threading
 
+import pandas as pd
 import stutils
 from stutils.sysutils import mkdir
 
@@ -191,7 +189,13 @@ class cache_iterator(fs_cache):
         in Python2, json instantiates loaded strings as unicode, so cached
             result might be slightly different from original
     """
+
     def __call__(self, func):
+        try:
+            import ijson.backends.yajl2 as ijson
+        except ImportError:
+            raise ImportError("Please install yajl-tools to use this decorator")
+
         @wraps(func)
         def wrapper(*args):
             cache_fpath = self.get_cache_fname(
