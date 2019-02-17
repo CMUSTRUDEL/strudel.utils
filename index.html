@@ -1,0 +1,164 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Reference &#8212; strudel.utils 0.4.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="reference">
+<h1>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>This package provides interface to the objects:</p>
+<ul class="simple">
+<li><cite>decorators</cite> - a set of common decorators</li>
+<li><cite>email_utils</cite> - email addresses processing functions</li>
+<li><cite>mapreduce</cite> - utils for parallel processing</li>
+<li><dl class="first docutils">
+<dt><cite>sysutils</cite> - functions to run system commands</dt>
+<dd>and work with files/directories</dd>
+</dl>
+</li>
+<li><cite>versions</cite> - utilities to work with version strings</li>
+</ul>
+<div class="section" id="module-stutils">
+<span id="configuration"></span><h2>Configuration<a class="headerlink" href="#module-stutils" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="modules-reference">
+<h2>Modules reference<a class="headerlink" href="#modules-reference" title="Permalink to this headline">¶</a></h2>
+<p>Documentation to follow..</p>
+<span class="target" id="module-stutils.decorators"></span><span class="target" id="module-stutils.email_utils"></span><span class="target" id="module-stutils.mapreduce"></span><p>Alternative approaches:</p>
+<p><cite>asyncio</cite></p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>Python 3.4+. Unfortunately, I have to support Python 2, mainly because of</dt>
+<dd>OSCAR project compatibility</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p><cite>concurrent.futures</cite></p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>available since Python 3.2, but there is a backport</dt>
+<dd><a class="reference external" href="https://pypi.org/project/futures/">https://pypi.org/project/futures/</a></dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>backport follows pretty much the same pattern but still needs a wrapper</dt>
+<dd>to support pandas objects. Native version (Python 3.2+) might give
+some performance advantages</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>native <cite>ThreadPool</cite> (<cite>from multiprocessing.pool import ThreadPool</cite>):</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>30..50% slower than this implementation</dt>
+<dd>(see test.TestMapReduce.test_native_threadpool)</dd>
+</dl>
+</li>
+<li>(minor) doesn’t support pandas objects</li>
+</ul>
+</div></blockquote>
+<span class="target" id="module-stutils.sysutils"></span><p>Operations with files</p>
+<span class="target" id="module-stutils.versions"></span></div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">strudel.utils</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Marat (@cmu.edu).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
