@@ -103,6 +103,12 @@ class TestDecorators(unittest.TestCase):
         self.assertTrue((cdf(10, 2, 'one') == cdf(10, 2, 'one')).all(None))
         self.assertIsNot(cdf(10, 2, 'one'), cdf(10, 2, 'one'))
 
+        cdf = d.fs_cache(idx=['0', '1'], **defaults)(test_multiindex_df)
+        self.assertIsInstance(cdf(10, 2, 'two'), pd.DataFrame)
+        self.assertIsInstance(cdf(10, 2, 'two').index, pd.MultiIndex)
+        self.assertTrue((cdf(10, 2, 'two') == cdf(10, 2, 'two')).all(None))
+        self.assertIsNot(cdf(10, 2, 'two'), cdf(10, 2, 'two'))
+
     def test_cache_iterator(self):
         # just in case those are set in environment variables
         defaults = {

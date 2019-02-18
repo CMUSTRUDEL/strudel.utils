@@ -80,7 +80,9 @@ class fs_cache(object):
             ds_path = stutils.get_config('ST_FS_CACHE_PATH', DEFAULT_PATH)
 
         self.expires = expires
-        self.idx = idx
+        if isinstance(idx, int):
+            idx = range(idx)
+        self.idx = list(idx)
         if not app_name:
             self.cache_path = ds_path
         else:
@@ -105,7 +107,7 @@ class fs_cache(object):
             cache_fpath = self.get_cache_fname(func.__name__, *args)
 
             if not self.expired(cache_fpath):
-                return pd.read_csv(cache_fpath, index_col=list(range(self.idx)),
+                return pd.read_csv(cache_fpath, index_col=self.idx,
                                    encoding="utf8", squeeze=True)
 
             res = func(*args)
