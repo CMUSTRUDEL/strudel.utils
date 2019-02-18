@@ -12,7 +12,7 @@ cache:
 
 install:
   - make install
-  - pip install requests
+  - pip install requests typing
 
 script:
   - make test
