@@ -150,15 +150,16 @@ class TestDecorators(unittest.TestCase):
         self.assertTrue(res4_list == res5_list)
 
     def test_file_naming(self):
-        # <cache_dir>/<app_name>/<cache_type>/<func_name>.[<param_string>.]csv
+        # <cache_dir>/<app_name>.cache/<cache_type>/<func_name>.[<param_string>.]csv
         cseries = d.fs_cache('my_app')(test_series)
         self.assertTrue(
-            cseries.get_cache_fname(10).endswith('/my_app/test_series.10.csv'))
+            cseries.get_cache_fname(10).endswith(
+                '/my_app.cache/test_series.10.csv'))
 
         typed_cseries = d.typed_fs_cache('my_app')('my_ctype')(test_series)
         self.assertTrue(
             typed_cseries.get_cache_fname(10).endswith(
-                '/my_app/my_ctype/test_series.10.csv'))
+                '/my_app.cache/my_ctype/test_series.10.csv'))
 
     def test_threadpool(self):
         n = 1000
