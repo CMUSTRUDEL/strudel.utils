@@ -14,7 +14,7 @@ from stutils import mapreduce
 from stutils.sysutils import mkdir
 
 # filesystem cache decorator defaults
-DEFAULT_EXPIRY = stutils.get_config('ST_FS_CACHE_DURATION', 3600 * 24 * 30 * 3)
+DEFAULT_EXPIRES = stutils.get_config('ST_FS_CACHE_DURATION', 3600 * 24 * 30 * 3)
 DEFAULT_PATH = stutils.get_config(
     'ST_FS_CACHE_PATH', os.path.join(tempfile.gettempdir(), '.st_fs_cache'))
 
@@ -30,13 +30,13 @@ class _FSCacher(object):
     extension = 'csv'
 
     def __init__(self, func, cache_dir='', app_name='', cache_type='', idx=1,
-                 expiry=None):
+                 expires=DEFAULT_EXPIRES):
         # type: (callable, str, str, str, Union[int, str, list], int) -> None
         """ Helper class for @fs_cache internals
         """
         self.func = func
         functools.update_wrapper(self, func)
-        self.expiry = expiry or DEFAULT_EXPIRY
+        self.expires = expires
         # Will create a path:
         # <cache_dir>/<app_name>/<cache_type>/, omitting missing parts
         self.cache_path = mkdir(cache_dir or DEFAULT_PATH, app_name, cache_type)
@@ -55,7 +55,7 @@ class _FSCacher(object):
 
     def _expired(self, cache_fpath):
         return not os.path.isfile(cache_fpath) \
-               or time.time() - os.path.getmtime(cache_fpath) > self.expiry
+               or time.time() - os.path.getmtime(cache_fpath) > self.expires
 
     def __call__(self, *args):
         cache_fpath = self.get_cache_fname(*args)
@@ -109,7 +109,8 @@ class _FSCacher(object):
                 os.remove(os.path.join(self.cache_path, fname))
 
 
-class fs_cache(object):
+def fs_cache(app_name='', cache_type='', idx=1,
+             expires=DEFAULT_EXPIRES, cache_dir='', helper_class=_FSCacher):
     """
     A decorator to cache results of functions returning
     pd.DataFrame or pd.Series objects under:
@@ -125,22 +126,30 @@ class fs_cache(object):
     :param idx: number of columns to use as an index
     :param cache_type: if present, cache files within app directory will be
         separated into different folders by their cache_type.
-    :param expiry: cache duration in seconds
+    :param expires: cache duration in seconds
     :param cache_dir: set custom file cache path
     """
-    helper_class = _FSCacher
 
-    def __init__(self, app_name='', idx=1, cache_type='', expiry=DEFAULT_EXPIRY,
-                 cache_dir=''):
-        self.app_name = app_name
-        self.idx = idx
-        self.cache_type = cache_type
-        self.expiry = expiry
-        self.cache_dir = cache_dir
+    def decorator(func):
+        return helper_class(func, cache_dir, app_name, cache_type, idx, expires)
 
-    def __call__(self, func):
-        return self.helper_class(func, self.cache_dir, self.app_name,
-                                 self.cache_type, self.idx, self.expiry)
+    return decorator
+
+
+def typed_fs_cache(app_name, *args, **kwargs):
+    """ Convenience method to simplify declaration of multiple @fs_cache
+    e.g.,
+
+    >>> my_fs_cache = typed_fs_cache('myapp_name', expires=86400 * 30)
+    >>> @my_fs_cache('first_method')
+    ... def some_method(*args, **kwargs):
+    ...     pass
+    >>> @my_fs_cache('second_method')
+    ... def some_other_method(*args, **kwargs):
+    ...     pass
+
+    """
+    return functools.partial(fs_cache, app_name, *args, **kwargs)
 
 
 def memoize(func):
@@ -214,7 +223,7 @@ class _FSIterCacher(_FSCacher):
         cache_fh.close()
 
 
-class cache_iterator(fs_cache):
+def cache_iterator(*args, **kwargs):
     """ A modification of fs_cache to handle large unstructured iterators
         - e.g., a result of a GitHubAPI call
 
@@ -224,7 +233,8 @@ class cache_iterator(fs_cache):
         in Python2, json instantiates loaded strings as unicode, so cached
             result might be slightly different from original
     """
-    helper_class = _FSIterCacher
+    kwargs['helper_class'] = _FSIterCacher
+    return fs_cache(*args, **kwargs)
 
 
 def guard(func):
