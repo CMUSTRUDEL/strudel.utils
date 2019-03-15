@@ -42,7 +42,8 @@ class _FSCacher(object):
         self.cache_path = mkdir(cache_dir or DEFAULT_PATH, app_name, cache_type)
 
         if isinstance(idx, int):
-            idx = range(idx)
+            # Python3 range objects won't work, so explicitly convert to list
+            idx = list(range(idx))
         self.idx = idx
 
     def get_cache_fname(self, *args):
