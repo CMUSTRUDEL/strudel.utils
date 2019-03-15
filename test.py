@@ -46,8 +46,8 @@ class TestDecorators(unittest.TestCase):
     def test_fs_cache(self):
         # just in case those are set in environment variables
         defaults = {
-            'ds_path': d.DEFAULT_PATH,
-            'expires': 3
+            'cache_dir': d.DEFAULT_PATH,
+            'expiry': 3
         }
 
         # no app, no type
@@ -63,7 +63,7 @@ class TestDecorators(unittest.TestCase):
         self.assertIsNot(res, cdf(10, 2, 'one'))
 
         # cache expiration
-        time.sleep(defaults['expires'])
+        time.sleep(defaults['expiry'])
         self.assertFalse((res == cdf(10, 2, 'one')).all(None))
 
         # app
@@ -112,8 +112,8 @@ class TestDecorators(unittest.TestCase):
     def test_cache_iterator(self):
         # just in case those are set in environment variables
         defaults = {
-            'ds_path': d.DEFAULT_PATH,
-            'expires': 3
+            'cache_dir': d.DEFAULT_PATH,
+            'expiry': 3
         }
 
         def test_iterator(*args):
@@ -137,11 +137,43 @@ class TestDecorators(unittest.TestCase):
         self.assertIsNot(res, res2)
         self.assertFalse(res_list == res3_list)
 
+        self.assertTrue(iter.cached('one'))
+        self.assertFalse(iter.cached('three'))
+        time.sleep(defaults['expiry'])
+        self.assertFalse(iter.cached('one'))
+        self.assertFalse(iter.cached('three'))
+
         res4 = iter('empty')
         res4_list = list(res4)
         res5_list = list(iter('empty'))
         self.assertIsInstance(res4, Generator)
         self.assertTrue(res4_list == res5_list)
+
+    def test_threadpool(self):
+        n = 1000
+
+        @d.threadpool(4)  # sleep in four threads
+        def increment(*args):
+            time.sleep(0.005)
+
+        start_time = time.time()
+        increment(list(range(n)))
+        elapsed = time.time() - start_time
+        self.assertLess(elapsed, 0.005 * n * 0.3)
+
+    def test_guard(self):
+        n = 1000
+        data = {'counter': 0}
+
+        @d.threadpool(4)
+        @d.guard
+        def increment(*args):
+            i = data['counter']
+            time.sleep(0.005)
+            data['counter'] = i + 1
+
+        increment(list(range(n)))
+        self.assertEqual(data['counter'], n)
 
 
 class TestMapReduce(unittest.TestCase):
