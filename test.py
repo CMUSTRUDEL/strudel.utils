@@ -137,6 +137,12 @@ class TestDecorators(unittest.TestCase):
         self.assertIsNot(res, res2)
         self.assertFalse(res_list == res3_list)
 
+        self.assertTrue(iter.cached('one'))
+        self.assertFalse(iter.cached('three'))
+        time.sleep(defaults['expiry'])
+        self.assertFalse(iter.cached('one'))
+        self.assertFalse(iter.cached('three'))
+
         res4 = iter('empty')
         res4_list = list(res4)
         res5_list = list(iter('empty'))
