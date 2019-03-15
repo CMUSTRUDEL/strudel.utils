@@ -47,7 +47,7 @@ class TestDecorators(unittest.TestCase):
         # just in case those are set in environment variables
         defaults = {
             'cache_dir': d.DEFAULT_PATH,
-            'expiry': 3
+            'expires': 3
         }
 
         # no app, no type
@@ -63,7 +63,7 @@ class TestDecorators(unittest.TestCase):
         self.assertIsNot(res, cdf(10, 2, 'one'))
 
         # cache expiration
-        time.sleep(defaults['expiry'])
+        time.sleep(defaults['expires'])
         self.assertFalse((res == cdf(10, 2, 'one')).all(None))
 
         # app
@@ -113,7 +113,7 @@ class TestDecorators(unittest.TestCase):
         # just in case those are set in environment variables
         defaults = {
             'cache_dir': d.DEFAULT_PATH,
-            'expiry': 3
+            'expires': 3
         }
 
         def test_iterator(*args):
@@ -139,7 +139,7 @@ class TestDecorators(unittest.TestCase):
 
         self.assertTrue(iter.cached('one'))
         self.assertFalse(iter.cached('three'))
-        time.sleep(defaults['expiry'])
+        time.sleep(defaults['expires'])
         self.assertFalse(iter.cached('one'))
         self.assertFalse(iter.cached('three'))
 
@@ -148,6 +148,17 @@ class TestDecorators(unittest.TestCase):
         res5_list = list(iter('empty'))
         self.assertIsInstance(res4, Generator)
         self.assertTrue(res4_list == res5_list)
+
+    def test_file_naming(self):
+        # <cache_dir>/<app_name>/<cache_type>/<func_name>.[<param_string>.]csv
+        cseries = d.fs_cache('my_app')(test_series)
+        self.assertTrue(
+            cseries.get_cache_fname(10).endswith('/my_app/test_series.10.csv'))
+
+        typed_cseries = d.typed_fs_cache('my_app')('my_ctype')(test_series)
+        self.assertTrue(
+            typed_cseries.get_cache_fname(10).endswith(
+                '/my_app/my_ctype/test_series.10.csv'))
 
     def test_threadpool(self):
         n = 1000
