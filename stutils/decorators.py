@@ -39,7 +39,8 @@ class _FSCacher(object):
         self.expires = expires
         # Will create a path:
         # <cache_dir>/<app_name>/<cache_type>/, omitting missing parts
-        self.cache_path = mkdir(cache_dir or DEFAULT_PATH, app_name, cache_type)
+        self.cache_path = mkdir(cache_dir or DEFAULT_PATH,
+                                app_name and app_name + '.cache', cache_type)
 
         if isinstance(idx, int):
             # Python3 range objects won't work, so explicitly convert to list
